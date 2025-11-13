@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Management System</title>
+    <!-- Keep your Flask CSS if you want to move styles out of this file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050816;
+            --bg-elevated: rgba(15, 23, 42, 0.92);
+            --primary: #6366f1;
+            --primary-soft: rgba(99, 102, 241, 0.18);
+            --primary-strong: rgba(129, 140, 248, 0.25);
+            --accent: #22d3ee;
+            --border-subtle: rgba(148, 163, 184, 0.25);
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --danger: #f97373;
+            --success: #4ade80;
+            --radius-lg: 18px;
+            --radius-xl: 22px;
+            --shadow-soft: 0 22px 45px rgba(15, 23, 42, 0.55);
+            --transition-fast: 150ms ease-out;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
+                radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.18), transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+        }
+
+        .app-wrapper {
+            width: 100%;
+            max-width: 1120px;
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .app-shell {
+            position: relative;
+            border-radius: 26px;
+            padding: 22px 22px 20px;
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            backdrop-filter: blur(18px);
+            overflow: hidden;
+        }
+
+        .app-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.15), transparent 55%),
+                radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.18), transparent 55%);
+            opacity: 0.28;
+            pointer-events: none;
+        }
+
+        .app-shell-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 4px 4px 16px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+            margin-bottom: 14px;
+        }
+
+        .app-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background:
+                radial-gradient(circle at 0 0, var(--accent), transparent 55%),
+                radial-gradient(circle at 100% 100%, var(--primary), transparent 55%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.65);
+        }
+
+        .app-title-text h1 {
+            margin: 0;
+            font-size: 1.35rem;
+            letter-spacing: 0.03em;
+        }
+
+        .app-title-text p {
+            margin: 2px 0 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .app-badge {
+            font-size: 0.7rem;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(129, 140, 248, 0.5);
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.22), rgba(56, 189, 248, 0.18));
+            color: #e5e7eb;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .app-badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: rgba(45, 212, 191, 0.95);
+            box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.2);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.6fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        @media (max-width: 880px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-subtle);
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+            padding: 16px 16px 14px;
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.65);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 0 0, var(--primary-soft), transparent 55%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .card-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 0.98rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: #e5e7eb;
+        }
+
+        .card-header span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .pill {
+            font-size: 0.7rem;
+            padding: 4px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.55);
+            color: var(--text-muted);
+        }
+
+        .upload-body,
+        .query-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .field-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            border-radius: var(--radius-lg);
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .file-input-wrapper:hover {
+            border-color: rgba(129, 140, 248, 0.9);
+            background: radial-gradient(circle at 0 0, rgba(79, 70, 229, 0.24), rgba(15, 23, 42, 0.98));
+            transform: translateY(-1px);
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.9), rgba(37, 99, 235, 0.7));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .file-text-main {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .file-text-sub {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+
+        .file-meta {
+            margin-top: 4px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .file-list {
+            margin-top: 4px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            max-height: 52px;
+            overflow: auto;
+        }
+
+        .file-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            margin: 2px 4px 2px 0;
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .file-pill span {
+            font-size: 0.72rem;
+        }
+
+        .file-pill small {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        button,
+        .btn {
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            position: relative;
+            border-radius: 999px;
+            padding: 8px 16px;
+            border: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            color: #0b1020;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast), opacity var(--transition-fast);
+            box-shadow: 0 10px 22px rgba(79, 70, 229, 0.65);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.04);
+            box-shadow: 0 16px 30px rgba(79, 70, 229, 0.8);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            border-radius: 999px;
+            padding: 6px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 0.76rem;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .btn-outline:hover {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: rgba(156, 163, 175, 0.9);
+            color: #e5e7eb;
+            transform: translateY(-0.5px);
+        }
+
+        .btn-icon {
+            font-size: 1rem;
+        }
+
+        .textarea {
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+            padding: 10px 11px;
+            resize: vertical;
+            min-height: 120px;
+            max-height: 240px;
+            width: 100%;
+            font-size: 0.86rem;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+        }
+
+        .textarea::placeholder {
+            color: rgba(148, 163, 184, 0.65);
+        }
+
+        .textarea:focus {
+            border-color: rgba(129, 140, 248, 0.95);
+            box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6);
+            transform: translateY(-0.5px);
+        }
+
+        .helper-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            gap: 10px;
+        }
+
+        .helper-text {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+
+        .token-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            color: var(--text-muted);
+        }
+
+        .response-card {
+            margin-top: 12px;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .response-header h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(209, 213, 219, 0.95);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--success);
+        }
+
+        .status-text {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .response-content {
+            border-radius: var(--radius-lg);
+            background: radial-gradient(circle at 0 0, var(--primary-strong), rgba(15, 23, 42, 0.96));
+            border: 1px solid rgba(148, 163, 184, 0.65);
+            padding: 10px 11px;
+            min-height: 82px;
+            max-height: 260px;
+            overflow-y: auto;
+            font-size: 0.86rem;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        .response-content.empty {
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.82rem;
+        }
+
+        .response-meta {
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .severity-info {
+            color: var(--accent);
+        }
+
+        .severity-error {
+            color: var(--danger);
+        }
+
+        .badge-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            margin-right: 4px;
+        }
+
+        .badge-dot.info {
+            background: var(--accent);
+        }
+
+        .badge-dot.error {
+            background: var(--danger);
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            border: 2px solid rgba(15, 23, 42, 0.8);
+            border-top-color: rgba(15, 23, 42, 0.1);
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            margin-top: 16px;
+            padding: 8px 4px 0;
+            border-top: 1px dashed rgba(148, 163, 184, 0.45);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .footer span strong {
+            color: rgba(209, 213, 219, 0.94);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .footer-link {
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-muted);
+            border-bottom: 1px dashed transparent;
+            padding-bottom: 1px;
+            transition: color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .footer-link:hover {
+            color: #e5e7eb;
+            border-color: rgba(148, 163, 184, 0.7);
+        }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+    <div class="app-shell">
+        <div class="app-shell-inner">
+            <header class="app-header">
+                <div class="app-title-group">
+                    <div class="app-logo">K</div>
+                    <div class="app-title-text">
+                        <h1>Knowledge Management System</h1>
+                        <p>Upload documents · Ask questions · Get context-aware answers</p>
+                    </div>
+                </div>
+                <div class="app-badge">
+                    <span class="app-badge-dot"></span>
+                    <span>RAG-ready • In-memory search</span>
+                </div>
+            </header>
+
+            <div class="layout">
+                <!-- Upload Card -->
+                <section class="card">
+                    <div class="card-inner">
+                        <div class="card-header">
+                            <div>
+                                <h2>Upload Documents</h2>
+                                <span>PDF, DOCX, TXT, CSV, and more</span>
+                            </div>
+                            <span class="pill">Step 1</span>
+                        </div>
+
+                        <form id="upload-form" class="upload-body">
+                            <label class="field-label">Document source</label>
+
+                            <label class="file-input-wrapper">
+                                <input type="file" id="file-input" multiple>
+                                <div class="file-icon">⬆</div>
+                                <div>
+                                    <div class="file-text-main">Drop files here or click to browse</div>
+                                    <div class="file-text-sub">We process files locally on the server you deployed.</div>
+                                    <div class="file-meta">Tip: Upload your policies, FAQs, SOPs, or project docs.</div>
+                                </div>
+                            </label>
+
+                            <div id="file-list" class="file-list"></div>
+
+                            <div class="button-row">
+                                <button type="submit" class="btn-primary" id="upload-btn">
+                                    <span id="upload-btn-spinner" class="spinner" style="display: none;"></span>
+                                    <span id="upload-btn-label">Upload &amp; Index</span>
+                                </button>
+                            </div>
+
+                            <div id="upload-status" class="helper-text"></div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Query + Response Card -->
+                <section class="card">
+                    <div class="card-inner">
+                        <div class="card-header">
+                            <div>
+                                <h2>Ask Questions</h2>
+                                <span>Chat with your knowledge base</span>
+                            </div>
+                            <span class="pill">Step 2</span>
+                        </div>
+
+                        <div class="query-body">
+                            <label for="question-input" class="field-label">Your question</label>
+                            <textarea id="question-input" class="textarea"
+                                      placeholder="Example: Summarize the refund policy across all uploaded PDFs."></textarea>
+
+                            <div class="helper-row">
+                                <span class="helper-text">We’ll retrieve relevant chunks and generate an answer.</span>
+                                <span class="token-badge">LLM-powered · RAG-friendly</span>
+                            </div>
+
+                            <div class="button-row" style="justify-content: space-between;">
+                                <button type="button" class="btn-outline" id="clear-question">
+                                    <span class="btn-icon">✕</span> Clear
+                                </button>
+                                <button type="button" class="btn-primary" id="submit-question">
+                                    <span id="query-btn-spinner" class="spinner" style="display: none;"></span>
+                                    <span id="query-btn-label">Ask Question</span>
+                                </button>
+                            </div>
+
+                            <div class="response-card">
+                                <div class="response-header">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <h3>Response</h3>
+                                        <div id="response-status-dot" class="status-dot" style="display: none;"></div>
+                                    </div>
+                                    <div id="response-status-text" class="status-text"></div>
+                                </div>
+
+                                <div id="response-content" class="response-content empty">
+                                    Your answer will appear here. Ask a question to get started.
+                                </div>
+
+                                <div class="response-meta">
+                                    <span id="response-meta-left">
+                                        <span class="badge-dot info"></span>
+                                        <span>Grounded in uploaded docs when available.</span>
+                                    </span>
+                                    <span id="response-meta-right">
+                                        Latency: <span id="latency-value">—</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="footer">
+                <span>Built for <strong>document-aware Q&amp;A</strong> · Plug in your RAG pipeline behind <code>/upload</code> &amp; <code>/query</code>.</span>
+                <div class="footer-links">
+                    <span class="footer-link">v1.0</span>
+                    <span class="footer-link">Self-hosted</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const uploadForm = document.getElementById('upload-form');
+    const uploadBtn = document.getElementById('upload-btn');
+    const uploadBtnLabel = document.getElementById('upload-btn-label');
+    const uploadBtnSpinner = document.getElementById('upload-btn-spinner');
+    const uploadStatus = document.getElementById('upload-status');
+
+    const questionInput = document.getElementById('question-input');
+    const submitQuestionBtn = document.getElementById('submit-question');
+    const queryBtnLabel = document.getElementById('query-btn-label');
+    const queryBtnSpinner = document.getElementById('query-btn-spinner');
+    const clearQuestionBtn = document.getElementById('clear-question');
+
+    const responseContent = document.getElementById('response-content');
+    const responseStatusDot = document.getElementById('response-status-dot');
+    const responseStatusText = document.getElementById('response-status-text');
+    const latencyValue = document.getElementById('latency-value');
+
+    function renderFileList(files) {
+        fileList.innerHTML = '';
+        if (!files || files.length === 0) {
+            return;
+        }
+        Array.from(files).forEach(file => {
+            const pill = document.createElement('span');
+            pill.className = 'file-pill';
+            const name = document.createElement('span');
+            name.textContent = file.name;
+            const size = document.createElement('small');
+            const kb = file.size / 1024;
+            size.textContent = `${kb.toFixed(1)} KB`;
+            pill.appendChild(name);
+            pill.appendChild(size);
+            fileList.appendChild(pill);
+        });
+    }
+
+    fileInput.addEventListener('change', () => {
+        renderFileList(fileInput.files);
+    });
+
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const files = fileInput.files;
+        if (!files || files.length === 0) {
+            uploadStatus.textContent = 'Please select at least one file to upload.';
+            uploadStatus.className = 'helper-text severity-error';
+            return;
+        }
+
+        const formData = new FormData();
+        for (let file of files) {
+            formData.append('file', file);
+        }
+
+        uploadBtn.disabled = true;
+        uploadBtnSpinner.style.display = 'inline-block';
+        uploadBtnLabel.textContent = 'Uploading...';
+        uploadStatus.textContent = '';
+        uploadStatus.className = 'helper-text';
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                uploadStatus.textContent = result.message || 'Files uploaded and indexed successfully.';
+                uploadStatus.className = 'helper-text severity-info';
+            } else {
+                uploadStatus.textContent = result.error || 'Error uploading files.';
+                uploadStatus.className = 'helper-text severity-error';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            uploadStatus.textContent = 'Network error while uploading files.';
+            uploadStatus.className = 'helper-text severity-error';
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtnSpinner.style.display = 'none';
+            uploadBtnLabel.textContent = 'Upload & Index';
+        }
+    });
+
+    clearQuestionBtn.addEventListener('click', () => {
+        questionInput.value = '';
+        responseContent.textContent = 'Your answer will appear here. Ask a question to get started.';
+        responseContent.classList.add('empty');
+        responseStatusDot.style.display = 'none';
+        responseStatusText.textContent = '';
+        latencyValue.textContent = '—';
+    });
+
+    submitQuestionBtn.addEventListener('click', async () => {
+        const question = questionInput.value.trim();
+        if (!question) {
+            responseStatusText.textContent = 'Please enter a question first.';
+            responseStatusText.className = 'status-text severity-error';
+            return;
+        }
+
+        submitQuestionBtn.disabled = true;
+        queryBtnSpinner.style.display = 'inline-block';
+        queryBtnLabel.textContent = 'Thinking...';
+
+        responseContent.textContent = 'Generating answer...';
+        responseContent.classList.remove('empty');
+        responseStatusDot.style.display = 'inline-block';
+        responseStatusText.textContent = 'Model running';
+        responseStatusText.className = 'status-text';
+        latencyValue.textContent = '…';
+
+        const startTime = performance.now();
+
+        try {
+            const response = await fetch('/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({question}),
+            });
+
+            const elapsed = performance.now() - startTime;
+            latencyValue.textContent = `${elapsed.toFixed(0)} ms`;
+
+            const result = await response.json();
+
+            if (response.ok) {
+                responseContent.textContent = result.response || 'No response returned from the model.';
+                responseContent.classList.remove('empty');
+                responseStatusDot.style.display = 'inline-block';
+                responseStatusText.textContent = 'Answer generated';
+                responseStatusText.className = 'status-text severity-info';
+            } else {
+                responseContent.textContent = result.error || 'Error while generating response.';
+                responseContent.classList.remove('empty');
+                responseStatusDot.style.display = 'inline-block';
+                responseStatusText.textContent = 'Error';
+                responseStatusText.className = 'status-text severity-error';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            responseContent.textContent = 'Network error while getting response.';
+            responseContent.classList.remove('empty');
+            responseStatusDot.style.display = 'inline-block';
+            responseStatusText.textContent = 'Network error';
+            responseStatusText.className = 'status-text severity-error';
+            latencyValue.textContent = '—';
+        } finally {
+            submitQuestionBtn.disabled = false;
+            queryBtnSpinner.style.display = 'none';
+            queryBtnLabel.textContent = 'Ask Question';
+        }
+    });
+</script>
+</body>
+</html>
