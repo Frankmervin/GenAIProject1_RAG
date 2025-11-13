@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Document the port app listens on
 EXPOSE 8080
 
-CMD ["python3","main.py"]
+CMD ["python3","app.py"]
